@@ -153,7 +153,7 @@ class MainPanel extends Component {
         this.state.currentTemp,
         newTargetTemp,
         this.state.mode
-      )
+      ),
     });
   };
 
@@ -162,32 +162,31 @@ class MainPanel extends Component {
     let diffy = y - Constants.cy;
 
     let basicAngle;
-    if(diffx === 0) {
+    if (diffx === 0) {
       basicAngle = 90;
-    }
-    else {
-      basicAngle = Math.atan(Math.abs(diffy)/Math.abs(diffx)) * 180 / Math.PI;
+    } else {
+      basicAngle =
+        (Math.atan(Math.abs(diffy) / Math.abs(diffx)) * 180) / Math.PI;
     }
     let finalAngle = "what what";
-    if ( (diffx>0) && (diffy >= 0) ) {
+    if (diffx > 0 && diffy >= 0) {
       finalAngle = 90 + basicAngle;
-    }
-    else if ((diffx<0) && (diffy<=0)) {
+    } else if (diffx < 0 && diffy <= 0) {
       finalAngle = 270 + basicAngle;
-    }
-    else if ((diffx<=0) && (diffy >0)) {
+    } else if (diffx <= 0 && diffy > 0) {
       finalAngle = 270 - basicAngle;
-    }
-    else if (diffx >= 0 && diffy < 0) {
+    } else if (diffx >= 0 && diffy < 0) {
       finalAngle = 90 - basicAngle;
     }
-    
-    if (finalAngle > Constants.rightRadialAngle && finalAngle < Constants.leftRadialAngle ) {
+
+    if (
+      finalAngle > Constants.rightRadialAngle &&
+      finalAngle < Constants.leftRadialAngle
+    ) {
       finalAngle = Constants.rightRadialAngle;
-      if ( this.state.pointerAngle <= Constants.rightRadialAngle) {
+      if (this.state.pointerAngle <= Constants.rightRadialAngle) {
         finalAngle = Constants.rightRadialAngle;
-      }
-      else if ( this.state.pointerAngle >= Constants.leftRadialAngle ) {
+      } else if (this.state.pointerAngle >= Constants.leftRadialAngle) {
         finalAngle = Constants.leftRadialAngle;
       }
     }
@@ -195,14 +194,14 @@ class MainPanel extends Component {
   };
 
   getTargetTemp = (angle) => {
-    if ( angle <= Constants.rightRadialAngle) {
+    if (angle <= Constants.rightRadialAngle) {
       angle += 360;
     }
     return Math.round(
       Constants.minTt +
-      (angle - Constants.leftRadialAngle) *
-        ((Constants.maxTt - Constants.minTt) /
-          (360 + Constants.rightRadialAngle - Constants.leftRadialAngle))
+        (angle - Constants.leftRadialAngle) *
+          ((Constants.maxTt - Constants.minTt) /
+            (360 + Constants.rightRadialAngle - Constants.leftRadialAngle))
     );
   };
 
@@ -434,7 +433,13 @@ class RadialSliderPath extends Component {
     return (
       <svg>
         <path
-          d={Functions.describeArc(Constants.cx, Constants.cy, Constants.radialRadius, Constants.leftRadialAngle, Constants.rightRadialAngle+360)}
+          d={Functions.describeArc(
+            Constants.cx,
+            Constants.cy,
+            Constants.radialRadius,
+            Constants.leftRadialAngle,
+            Constants.rightRadialAngle + 360
+          )}
           fill="none"
           stroke="white"
           strokeWidth="6"
@@ -446,7 +451,6 @@ class RadialSliderPath extends Component {
   }
 }
 class RadialSliderPointer extends Component {
-  
   render() {
     let pos = Functions.polarToCartesian(
       Constants.cx,
@@ -454,7 +458,7 @@ class RadialSliderPointer extends Component {
       Constants.radialRadius,
       this.props.pointerAngle
     );
-    
+
     let cx = pos.x;
     let cy = pos.y;
     return (
