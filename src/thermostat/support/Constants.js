@@ -8,7 +8,7 @@ export const dTcool=1.5;
 export const dTheat=1;
 
 //default colours
-export const offColour = "#7c8083";
+export const offColour = "#66616b";
 export const coolingColour = "#81dafc";
 export const coolingColourSide = "#4fcbfc";
 export const heatingColour = "#fc819d ";

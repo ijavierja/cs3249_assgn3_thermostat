@@ -102,11 +102,14 @@ class MainPanel extends Component {
             stroke="#6d6d6d"
             strokeWidth="10"
           />
-          <RadialSlider
+          <ThermostatView
             currentTemp={this.state.currentTemp}
             targetTemp={this.state.targetTemp}
             mode={this.state.mode}
           />
+          <UnitSymbol />
+          <SymbolHot />
+          <SymbolCold />
         </svg>
         <div>
           target:
@@ -123,7 +126,7 @@ class MainPanel extends Component {
   }
 }
 
-class RadialSlider extends Component {
+class ThermostatView extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -161,30 +164,21 @@ class RadialSlider extends Component {
         />
         <TargetTemp targetTemp={this.props.targetTemp} />
         <CurrentTemp currentTemp={this.props.currentTemp} />
-        <UnitSymbol />
-        <SymbolHot />
-        <SymbolCold />
         <path
           d={describeArc(Constants.cx, Constants.cy, 177, 140, 220)}
           fill="none"
           stroke={this.setColour(this.props.mode)}
           strokeWidth="10"
         />
-        <RadialSliderPath
-          onMouseEnter={this.handleMouseEnter}
-          onMouseLeave={this.handleMouseLeave}
-          isHovered={this.state.isHovered}
-        />
-        <RadialSliderPointer
-          onMouseEnter={this.handleMouseEnter}
-          onMouseLeave={this.handleMouseLeave}
+        <RadialSlider
+          handleMouseEnter={this.handleMouseEnter}
+          handleMouseLeave={this.handleMouseLeave}
           isHovered={this.state.isHovered}
         />
       </React.Fragment>
     );
   }
 }
-
 
 class TargetTemp extends Component {
   constructor(props) {
@@ -275,6 +269,25 @@ class SymbolCold extends Component {
   }
 }
 
+class RadialSlider extends Component {
+  render() {
+    return (
+      <svg>
+        <RadialSliderPath
+          handleMouseEnter={this.props.handleMouseEnter}
+          handleMouseLeave={this.props.handleMouseLeave}
+          isHovered={this.props.isHovered}
+        />
+        <RadialSliderPointer
+          handleMouseEnter={this.props.handleMouseEnter}
+          handleMouseLeave={this.props.handleMouseLeave}
+          isHovered={this.props.isHovered}
+        />
+      </svg>
+    );
+  }
+}
+
 class RadialSliderPath extends Component {
   render() {
     return (
@@ -284,8 +297,8 @@ class RadialSliderPath extends Component {
           fill="none"
           stroke="white"
           strokeWidth="6"
-          onMouseEnter={this.props.onMouseEnter}
-          onMouseLeave={this.props.onMouseLeave}
+          onMouseEnter={this.props.handleMouseEnter}
+          onMouseLeave={this.props.handleMouseLeave}
         />
       </svg>
     );
@@ -316,8 +329,8 @@ class RadialSliderPointer extends Component {
           fill={this.props.isHovered ? "black" : "white"}
           strokeWidth="1.5"
           stroke="grey"
-          onMouseEnter={this.props.onMouseEnter}
-          onMouseLeave={this.props.onMouseLeave}
+          onMouseEnter={this.props.handleMouseEnter}
+          onMouseLeave={this.props.handleMouseLeave}
         />
       </svg>
     );
