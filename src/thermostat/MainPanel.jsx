@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import "./MainPanel.css";
-import describeArc from "./support/Functions.js";
+import * as Functions from "./support/Functions.js";
 import * as Constants from "./support/Constants.js";
 
 class MainPanel extends Component {
@@ -8,8 +8,20 @@ class MainPanel extends Component {
     super(props);
     this.state = {
       currentTemp: Constants.initialCurrentTemp,
-      targetTemp: Constants.initialTargetTEmp,
+      targetTemp: Constants.initialTargetTemp,
       mode: Constants.mode.off,
+      isDragging: false,
+      isHovered: false,
+      pointerAngle: Functions.radialPointerPos(
+        Constants.leftRadialAngle,
+        Constants.rightRadialAngle,
+        Constants.minTt,
+        Constants.maxTt,
+        Constants.radialRadius,
+        Constants.cx,
+        Constants.cy,
+        this.props.targetTemp
+      ),
     };
   }
   updateMode = (currentTemp, targetTemp, mode) => {
@@ -25,46 +37,72 @@ class MainPanel extends Component {
     ) {
       return Constants.mode.off;
     }
-    console.log("errr");
     return mode;
   };
 
   increaseCurrent = () => {
+    let newCurrentTemp;
+    if (this.state.currentTemp >= Constants.maxTc) {
+      newCurrentTemp = this.state.currentTemp;
+    } else {
+      newCurrentTemp = this.state.currentTemp + 1;
+    }
+
     this.setState({
-      currentTemp: this.state.currentTemp + 1,
+      currentTemp: newCurrentTemp,
       mode: this.updateMode(
-        this.state.currentTemp + 1,
+        newCurrentTemp,
         this.state.targetTemp,
         this.state.mode
       ),
     });
   };
   decreaseCurrent = () => {
+    let newCurrentTemp;
+    if (this.state.currentTemp <= Constants.minTc) {
+      newCurrentTemp = this.state.currentTemp;
+    } else {
+      newCurrentTemp = this.state.currentTemp - 1;
+    }
     this.setState({
-      currentTemp: this.state.currentTemp - 1,
+      currentTemp: newCurrentTemp,
       mode: this.updateMode(
-        this.state.currentTemp - 1,
+        newCurrentTemp,
         this.state.targetTemp,
         this.state.mode
       ),
     });
   };
   increaseTarget = () => {
+    let newTargetTemp;
+    if (this.state.targetTemp >= Constants.maxTt) {
+      newTargetTemp = this.state.targetTemp;
+    } else {
+      newTargetTemp = this.state.targetTemp + 1;
+    }
+
     this.setState({
-      targetTemp: this.state.targetTemp + 1,
+      targetTemp: newTargetTemp,
       mode: this.updateMode(
         this.state.currentTemp,
-        this.state.targetTemp + 1,
+        newTargetTemp,
         this.state.mode
       ),
     });
   };
   decreaseTarget = () => {
+    let newTargetTemp;
+    if (this.state.targetTemp <= Constants.minTt) {
+      newTargetTemp = this.state.targetTemp;
+    } else {
+      newTargetTemp = this.state.targetTemp - 1;
+    }
+
     this.setState({
-      targetTemp: this.state.targetTemp - 1,
+      targetTemp: newTargetTemp,
       mode: this.updateMode(
         this.state.currentTemp,
-        this.state.targetTemp - 1,
+        newTargetTemp,
         this.state.mode
       ),
     });
@@ -77,12 +115,119 @@ class MainPanel extends Component {
     } else {
       this.increaseTarget();
     }
+    e.preventDefault();
+    e.nativeEvent.stopImmediatePropagation();
+  };
+
+  handleMouseEnterSlider = () => {
+    this.setState({ isHovered: true });
+  };
+
+  handleMouseLeaveSlider = () => {
+    this.setState({ isHovered: false });
+  };
+
+  handleMouseDown = (e) => {
+    if (e.button !== 0) {
+      return;
+    }
+    this.setState({ isDragging: true });
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
+  handleMouseUp = (e) => {
+    this.setState({ isDragging: false });
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
+  handleMouseMove = (e) => {
+    e.preventDefault();
+    if (!this.state.isDragging) {
+      return;
+    }
+    let newAngle = this.getAngle(e.pageX, e.pageY);
+    let newTargetTemp = this.getTargetTemp(newAngle);
+    this.setState({
+      pointerAngle: newAngle,
+      targetTemp: newTargetTemp,
+      mode: this.updateMode(
+        this.state.currentTemp,
+        newTargetTemp,
+        this.state.mode
+      )
+    });
+  };
+
+  getAngle = (x, y) => {
+    let diffx = x - Constants.cx;
+    let diffy = y - Constants.cy;
+
+    let basicAngle;
+    if(diffx === 0) {
+      basicAngle = 90;
+    }
+    else {
+      basicAngle = Math.atan(Math.abs(diffy)/Math.abs(diffx)) * 180 / Math.PI;
+    }
+    let finalAngle = "what what";
+    if ( (diffx>0) && (diffy >= 0) ) {
+      finalAngle = 90 + basicAngle;
+    }
+    else if ((diffx<0) && (diffy<=0)) {
+      finalAngle = 270 + basicAngle;
+    }
+    else if ((diffx<=0) && (diffy >0)) {
+      finalAngle = 270 - basicAngle;
+    }
+    else if (diffx >= 0 && diffy < 0) {
+      finalAngle = 90 - basicAngle;
+    }
+    
+    if (finalAngle > Constants.rightRadialAngle && finalAngle < Constants.leftRadialAngle ) {
+      finalAngle = Constants.rightRadialAngle;
+      if ( this.state.pointerAngle <= Constants.rightRadialAngle) {
+        finalAngle = Constants.rightRadialAngle;
+      }
+      else if ( this.state.pointerAngle >= Constants.leftRadialAngle ) {
+        finalAngle = Constants.leftRadialAngle;
+      }
+    }
+    return finalAngle;
+  };
+
+  getTargetTemp = (angle) => {
+    if ( angle <= Constants.rightRadialAngle) {
+      angle += 360;
+    }
+    return Math.round(
+      Constants.minTt +
+      (angle - Constants.leftRadialAngle) *
+        ((Constants.maxTt - Constants.minTt) /
+          (360 + Constants.rightRadialAngle - Constants.leftRadialAngle))
+    );
+  };
+
+  changeScroll = () => {
+    let style = document.body.style.overflow;
+    document.body.style.overflow = style === "hidden" ? "auto" : "hidden";
   };
 
   render() {
     return (
-      <div className="MainPanel" onWheel={this.handleMouseScroll}>
-        <svg width={Constants.cx * 2} height={Constants.cy * 2}>
+      <div
+        className="MainPanel"
+        onWheel={this.handleMouseScroll}
+        onMouseUp={this.handleMouseUp}
+        onMouseMove={this.handleMouseMove}
+      >
+        <svg
+          width={Constants.cx * 2}
+          height={Constants.cy * 2}
+          onMouseEnter={this.changeScroll}
+          onMouseLeave={this.changeScroll}
+        >
           <circle cx={Constants.cx} cy={Constants.cy} r="200" fill="#dddddd" />
           <circle cx={Constants.cx} cy={Constants.cy} r="190" fill="white" />
           <circle cx={Constants.cx} cy={Constants.cy} r="180" fill="black" />
@@ -91,32 +236,33 @@ class MainPanel extends Component {
             <stop offset="100%" stopColor={Constants.heatingColourSide}></stop>
           </linearGradient>
           <path
-            d={describeArc(Constants.cx, Constants.cy, 177, 220, 500)}
+            d={Functions.describeArc(
+              Constants.cx,
+              Constants.cy,
+              Constants.colourRadius,
+              Constants.leftRadialAngle,
+              Constants.rightRadialAngle + 360
+            )}
             fill="none"
             stroke="url(#gradientColour)"
             strokeWidth="10"
           />
-          <path
-            d={describeArc(Constants.cx, Constants.cy, 177, 140, 220)}
-            fill="none"
-            stroke="#6d6d6d"
-            strokeWidth="10"
           />
           <ThermostatView
             currentTemp={this.state.currentTemp}
             targetTemp={this.state.targetTemp}
             mode={this.state.mode}
+            isHovered={this.state.isHovered}
+            handleMouseEnterSlider={this.handleMouseEnterSlider}
+            handleMouseLeaveSlider={this.handleMouseLeaveSlider}
+            isDragging={this.state.isDragging}
+            handleMouseDown={this.handleMouseDown}
           />
           <UnitSymbol />
           <SymbolHot />
           <SymbolCold />
         </svg>
-        <div>
-          target:
-          <button onClick={this.increaseTarget}>Up</button>
-          <button onClick={this.decreaseTarget}>down</button>
-        </div>
-        <div>
+        <div className="Button">
           current:
           <button onClick={this.increaseCurrent}>Up</button>
           <button onClick={this.decreaseCurrent}>down</button>
@@ -127,20 +273,6 @@ class MainPanel extends Component {
 }
 
 class ThermostatView extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      isHovered: false,
-    };
-  }
-  handleMouseEnter = () => {
-    this.setState({ isHovered: true });
-  };
-
-  handleMouseLeave = () => {
-    this.setState({ isHovered: false });
-  };
-
   setColour = (mode) => {
     if (mode == Constants.mode.off) {
       return Constants.offColour;
@@ -157,23 +289,34 @@ class ThermostatView extends Component {
     return (
       <React.Fragment>
         <circle
-          cx="200"
-          cy="200"
-          r="173"
+          cx={Constants.cx}
+          cy={Constants.cy}
+          r={Constants.thermostatRadius}
           fill={this.setColour(this.props.mode)}
+          onMouseEnter={this.props.handleMouseEnter}
+          onMouseLeave={this.props.handleMouseLeave}
         />
         <TargetTemp targetTemp={this.props.targetTemp} />
         <CurrentTemp currentTemp={this.props.currentTemp} />
         <path
-          d={describeArc(Constants.cx, Constants.cy, 177, 140, 220)}
+          d={Functions.describeArc(
+            Constants.cx,
+            Constants.cy,
+            177,
+            Constants.rightRadialAngle,
+            Constants.leftRadialAngle
+          )}
           fill="none"
           stroke={this.setColour(this.props.mode)}
           strokeWidth="10"
         />
         <RadialSlider
-          handleMouseEnter={this.handleMouseEnter}
-          handleMouseLeave={this.handleMouseLeave}
-          isHovered={this.state.isHovered}
+          handleMouseEnterSlider={this.props.handleMouseEnterSlider}
+          handleMouseLeaveSlider={this.props.handleMouseLeaveSlider}
+          isHovered={this.props.isHovered}
+          targetTemp={this.props.targetTemp}
+          handleMouseDown={this.props.handleMouseDown}
+          isDragging={this.props.isDragging}
         />
       </React.Fragment>
     );
@@ -181,17 +324,14 @@ class ThermostatView extends Component {
 }
 
 class TargetTemp extends Component {
-  constructor(props) {
-    super(props);
-  }
   render() {
     return (
       <text
         x="50%"
-        y="55%"
+        y="50%"
         dominantBaseline="middle"
         textAnchor="middle"
-        fontSize="100"
+        fontSize="115"
         fill="white"
         fontStyle="Helvetica Neue"
       >
@@ -202,16 +342,13 @@ class TargetTemp extends Component {
 }
 
 class CurrentTemp extends Component {
-  constructor(props) {
-    super(props);
-  }
   render() {
     return (
       <text
         x="50%"
-        y="70%"
+        y="69%"
         textAnchor="middle"
-        fontSize="30"
+        fontSize="23"
         fill="white"
         fontStyle="Helvetica Neue"
       >
@@ -227,7 +364,7 @@ class UnitSymbol extends Component {
       <svg class="svg-icon">
         <path
           fill="none"
-          transform="translate(191,300)"
+          transform="translate(191,335)"
           strokeWidth="0.9"
           stroke="white"
           d="M5.776,4.086c-0.933,0-1.689,0.756-1.689,1.689s0.756,1.69,1.689,1.69s1.689-0.757,1.689-1.69S6.709,4.086,5.776,4.086 M5.776,6.621c-0.466,0-0.845-0.378-0.845-0.845c0-0.466,0.378-0.845,0.845-0.845S6.621,5.31,6.621,5.776C6.621,6.243,6.243,6.621,5.776,6.621 M9.161,14.219l1.261,0.004v-3.378h3.379V9.577h-3.379V7.043h3.801l0.002-1.262H9.161V14.219zM17.603,0.708H2.397c-0.933,0-1.689,0.756-1.689,1.689v15.205c0,0.934,0.756,1.689,1.689,1.689h15.205c0.933,0,1.689-0.756,1.689-1.689V2.397C19.292,1.464,18.535,0.708,17.603,0.708 M18.447,17.602c0,0.467-0.379,0.846-0.845,0.846H2.397c-0.466,0-0.845-0.379-0.845-0.846V2.397c0-0.466,0.378-0.845,0.845-0.845h15.205c0.466,0,0.845,0.379,0.845,0.845V17.602z"
@@ -274,14 +411,17 @@ class RadialSlider extends Component {
     return (
       <svg>
         <RadialSliderPath
-          handleMouseEnter={this.props.handleMouseEnter}
-          handleMouseLeave={this.props.handleMouseLeave}
+          handleMouseEnterSlider={this.props.handleMouseEnterSlider}
+          handleMouseLeaveSlider={this.props.handleMouseLeaveSlider}
           isHovered={this.props.isHovered}
         />
         <RadialSliderPointer
-          handleMouseEnter={this.props.handleMouseEnter}
-          handleMouseLeave={this.props.handleMouseLeave}
+          handleMouseEnterSlider={this.props.handleMouseEnterSlider}
+          handleMouseLeaveSlider={this.props.handleMouseLeaveSlider}
           isHovered={this.props.isHovered}
+          targetTemp={this.props.targetTemp}
+          handleMouseDown={this.props.handleMouseDown}
+          isDragging={this.props.isDragging}
         />
       </svg>
     );
@@ -293,44 +433,60 @@ class RadialSliderPath extends Component {
     return (
       <svg>
         <path
-          d={describeArc(Constants.cx, Constants.cy, 155, 220, 500)}
+          d={Functions.describeArc(Constants.cx, Constants.cy, Constants.radialRadius, Constants.leftRadialAngle, Constants.rightRadialAngle+360)}
           fill="none"
           stroke="white"
           strokeWidth="6"
-          onMouseEnter={this.props.handleMouseEnter}
-          onMouseLeave={this.props.handleMouseLeave}
+          onMouseEnter={this.props.handleMouseEnterSlider}
+          onMouseLeave={this.props.handleMouseLeaveSlider}
         />
       </svg>
     );
   }
 }
 class RadialSliderPointer extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      isHovered: false,
-    };
-  }
-  handleMouseEnter = () => {
-    this.setState({ isHovered: true });
-  };
-
-  handleMouseLeave = () => {
-    this.setState({ isHovered: false });
-  };
-
+  
   render() {
+    let pos = Functions.radialPointerPos(
+      Constants.leftRadialAngle,
+      Constants.rightRadialAngle,
+      Constants.minTt,
+      Constants.maxTt,
+      Constants.radialRadius,
+      Constants.cx,
+      Constants.cy,
+      this.props.targetTemp
+    );
+    if (pos === undefined) {
+      let cx = Constants.cx;
+      let cy = Constants.cy;
+    }
+
+    let cx = pos.x;
+
+    let cy = pos.y;
     return (
       <svg>
         <circle
-          cx={Constants.cx + 155 * Math.cos(((500 - 90) * Math.PI) / 180.0)}
-          cy={Constants.cy + 155 * Math.sin(((500 - 90) * Math.PI) / 180.0)}
-          r="8"
-          fill={this.props.isHovered ? "black" : "white"}
+          cx={cx}
+          cy={cy}
+          r="10"
+          fill={this.props.isHovered ? "#C93756" : "white"}
           strokeWidth="1.5"
-          stroke="grey"
-          onMouseEnter={this.props.handleMouseEnter}
-          onMouseLeave={this.props.handleMouseLeave}
+          stroke="white"
+          onMouseEnter={this.props.handleMouseEnterSlider}
+          onMouseLeave={this.props.handleMouseLeaveSlider}
+          onMouseDown={this.props.handleMouseDown}
+        />
+        <circle
+          cx={cx}
+          cy={cy}
+          r="16"
+          fill="white"
+          onMouseEnter={this.props.handleMouseEnterSlider}
+          onMouseLeave={this.props.handleMouseLeaveSlider}
+          onMouseDown={this.props.handleMouseDown}
+          opacity={this.props.isDragging ? "60%" : "0%"}
         />
       </svg>
     );

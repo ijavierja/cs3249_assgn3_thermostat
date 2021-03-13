@@ -1,6 +1,13 @@
-/* -----
-SVG Icons - svgicons.sparkk.fr
------ */
+.MainPanel {
+  position: relative;
+  width: 2000px;
+  height: 2000px;
+  text-align: left
+}
+.Button {
+  width: 400px;
+  text-align: center
+}
 
 .svg-icon {
   width: 1.5em;
