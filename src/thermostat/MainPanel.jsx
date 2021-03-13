@@ -12,15 +12,12 @@ class MainPanel extends Component {
       mode: Constants.mode.off,
       isDragging: false,
       isHovered: false,
-      pointerAngle: Functions.radialPointerPos(
+      pointerAngle: Functions.valueToAngle(
         Constants.leftRadialAngle,
         Constants.rightRadialAngle,
         Constants.minTt,
         Constants.maxTt,
-        Constants.radialRadius,
-        Constants.cx,
-        Constants.cy,
-        this.props.targetTemp
+        Constants.initialTargetTemp
       ),
     };
   }
@@ -215,6 +212,7 @@ class MainPanel extends Component {
   };
 
   render() {
+    console.log("pointer angle" + this.state.pointerAngle);
     return (
       <div
         className="MainPanel"
@@ -257,6 +255,7 @@ class MainPanel extends Component {
             handleMouseLeaveSlider={this.handleMouseLeaveSlider}
             isDragging={this.state.isDragging}
             handleMouseDown={this.handleMouseDown}
+            pointerAngle={this.state.pointerAngle}
           />
           <UnitSymbol />
           <SymbolHot />
@@ -317,6 +316,7 @@ class ThermostatView extends Component {
           targetTemp={this.props.targetTemp}
           handleMouseDown={this.props.handleMouseDown}
           isDragging={this.props.isDragging}
+          pointerAngle={this.props.pointerAngle}
         />
       </React.Fragment>
     );
@@ -422,6 +422,7 @@ class RadialSlider extends Component {
           targetTemp={this.props.targetTemp}
           handleMouseDown={this.props.handleMouseDown}
           isDragging={this.props.isDragging}
+          pointerAngle={this.props.pointerAngle}
         />
       </svg>
     );
@@ -447,23 +448,14 @@ class RadialSliderPath extends Component {
 class RadialSliderPointer extends Component {
   
   render() {
-    let pos = Functions.radialPointerPos(
-      Constants.leftRadialAngle,
-      Constants.rightRadialAngle,
-      Constants.minTt,
-      Constants.maxTt,
-      Constants.radialRadius,
+    let pos = Functions.polarToCartesian(
       Constants.cx,
       Constants.cy,
-      this.props.targetTemp
+      Constants.radialRadius,
+      this.props.pointerAngle
     );
-    if (pos === undefined) {
-      let cx = Constants.cx;
-      let cy = Constants.cy;
-    }
-
+    
     let cx = pos.x;
-
     let cy = pos.y;
     return (
       <svg>

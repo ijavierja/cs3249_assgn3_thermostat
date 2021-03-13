@@ -1,4 +1,4 @@
-function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+export function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
   var angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
 
   return {
@@ -55,4 +55,18 @@ export function radialPointerPos(
   var valueToAngle = (value - minValue) * (360 - leftAngle + rightAngle) / (maxValue - minValue) + leftAngle;
 
   return polarToCartesian(cx, cy, r, valueToAngle);
+}
+
+export function valueToAngle(
+  leftAngle,
+  rightAngle,
+  minValue,
+  maxValue,
+  value
+) {
+  return (
+    ((value - minValue) * (360 - leftAngle + rightAngle)) /
+      (maxValue - minValue) +
+    leftAngle
+  );
 }
