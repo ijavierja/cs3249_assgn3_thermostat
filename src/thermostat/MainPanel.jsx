@@ -128,7 +128,18 @@ class MainPanel extends Component {
     if (e.button !== 0) {
       return;
     }
-    this.setState({ isDragging: true });
+    let newAngle = this.getAngle(e.pageX, e.pageY);
+    let newTargetTemp = this.getTargetTemp(newAngle);
+    this.setState({
+      pointerAngle: newAngle,
+      targetTemp: newTargetTemp,
+      isDragging: true,
+      mode: this.updateMode(
+        this.state.currentTemp,
+        newTargetTemp,
+        this.state.mode
+      ),
+    });
     e.stopPropagation();
     e.preventDefault();
   };
@@ -138,6 +149,22 @@ class MainPanel extends Component {
     e.stopPropagation();
     e.preventDefault();
   };
+  /*handlePathClick = (e) => {
+    console.log("hello");
+    e.preventDefault();
+    let newAngle = this.getAngle(e.pageX, e.pageY);
+    let newTargetTemp = this.getTargetTemp(newAngle);
+    this.setState({
+      pointerAngle: newAngle,
+      targetTemp: newTargetTemp,
+      mode: this.updateMode(
+        this.state.currentTemp,
+        newTargetTemp,
+        this.state.mode
+      ),
+    });
+    e.stopPropagation();
+  }*/
 
   handleMouseMove = (e) => {
     e.preventDefault();
@@ -211,7 +238,6 @@ class MainPanel extends Component {
   };
 
   render() {
-    console.log("pointer angle" + this.state.pointerAngle);
     return (
       <div
         className="MainPanel"
@@ -255,6 +281,7 @@ class MainPanel extends Component {
             isDragging={this.state.isDragging}
             handleMouseDown={this.handleMouseDown}
             pointerAngle={this.state.pointerAngle}
+            handlePathMouseDown={this.handleMouseDown}
           />
           <UnitSymbol />
           <SymbolHot />
@@ -316,6 +343,7 @@ class ThermostatView extends Component {
           handleMouseDown={this.props.handleMouseDown}
           isDragging={this.props.isDragging}
           pointerAngle={this.props.pointerAngle}
+          handlePathMouseDown={this.props.handlePathMouseDown}
         />
       </React.Fragment>
     );
@@ -413,6 +441,7 @@ class RadialSlider extends Component {
           handleMouseEnterSlider={this.props.handleMouseEnterSlider}
           handleMouseLeaveSlider={this.props.handleMouseLeaveSlider}
           isHovered={this.props.isHovered}
+          handlePathMouseDown={this.props.handlePathMouseDown}
         />
         <RadialSliderPointer
           handleMouseEnterSlider={this.props.handleMouseEnterSlider}
@@ -429,6 +458,10 @@ class RadialSlider extends Component {
 }
 
 class RadialSliderPath extends Component {
+  handleClick = (e) => {
+    console.log(e.pageX + " " + e.pageY);
+  }
+  
   render() {
     return (
       <svg>
@@ -445,12 +478,14 @@ class RadialSliderPath extends Component {
           strokeWidth="6"
           onMouseEnter={this.props.handleMouseEnterSlider}
           onMouseLeave={this.props.handleMouseLeaveSlider}
+          onMouseDown={this.props.handlePathMouseDown}
         />
       </svg>
     );
   }
 }
 class RadialSliderPointer extends Component {
+ 
   render() {
     let pos = Functions.polarToCartesian(
       Constants.cx,
